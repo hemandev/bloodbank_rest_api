@@ -3,24 +3,12 @@ from rest_framework import viewsets, renderers, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
-from .serializers import UserSerializer, GroupSerializer, BankDataSerializer
+from .serializers import BankDataSerializer
 from .models import DonerDetails
 from rest_framework.decorators import api_view, parser_classes
 from .gmaps import LocationDetails
 from collections import OrderedDict
 import operator
-
-
-class UserViewSet(viewsets.ModelViewSet):
-
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-
-
-class GroupViewSet(viewsets.ModelViewSet):
-
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
 
 
 class BankDataViewSet(viewsets.ModelViewSet):
@@ -63,16 +51,17 @@ def change_details(request, pk):
 @api_view(['GET'])
 def query_users(request,):
     if request.method == 'GET':
-        doner_details = {}
-        dictt = {}
         group = request.query_params.get('group')
         user_location = request.query_params.get('location')
-        doners = DonerDetails.objects.filter(blood_group__exact=group)
-        for item in doners:
-            doner_location = item.location
+        district = request.query_params.get('district')
+        doners = DonerDetails.objects.filter(blood_group__exact=group, district__exact=district)
+        doner_details = BankDataSerializer(doners, many=True).data
+        for index in range(len(doner_details)):
+            doner_location = doner_details[index]['location']
             distance = LocationDetails().get_distance(user_location, doner_location)
-            doner_details[item.name] = distance
-            sorted_list = OrderedDict(sorted(doner_details.items(), key=operator.itemgetter(1)))
+            doner_details[index]['distance'] = distance
+
+        sorted_list = sorted(doner_details, key=operator.itemgetter('distance'))
 
         return Response(sorted_list)
 

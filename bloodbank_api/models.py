@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 from .gmaps import LocationDetails
 
+
 class DonerDetails(models.Model):
 
     choices = ((True, 'Yes'), (False, 'No'))
@@ -15,7 +16,7 @@ class DonerDetails(models.Model):
     recently_donated = models.BooleanField(choices=choices)
     phone_number = models.IntegerField()
     location = models.TextField(max_length=100)
-    coordinates3 = models.TextField(max_length=100,null=True)
+    district = models.TextField(max_length=100, default='Trivandrum')
 
     def get_cord(self):
         return LocationDetails().get_geocode(self.location)
